@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>德川家康按摩 - 評論助手</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #001D40;
+            --accent-gold: #B39151;
+            --light-white: #FFFFFF;
+            --text-grey: #e0e0e0;
+            --card-bg: rgba(255, 255, 255, 0.07);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans TC', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--primary-blue);
+            color: var(--light-white);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(179, 145, 81, 0.15) 0%, transparent 40%);
+            overflow-x: hidden;
+        }
+
+        header {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+            border: 2px solid var(--light-white);
+            padding: 8px 25px;
+            display: inline-block;
+        }
+
+        .brand-name {
+            font-size: 12px;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            opacity: 0.7;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .title-box {
+            background-color: rgba(255, 255, 255, 0.03);
+            padding: 22px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 450px;
+            margin-bottom: 25px;
+            border-left: 4px solid var(--accent-gold);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeIn 1s ease-out;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: var(--accent-gold);
+            font-weight: 700;
+        }
+
+        p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #ccc;
+            margin-bottom: 15px;
+        }
+
+        .photo-tip {
+            font-size: 13px;
+            color: var(--accent-gold);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .controls {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+
+        .btn-refresh {
+            background: transparent;
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-refresh:active {
+            background: rgba(179, 145, 81, 0.1);
+            transform: scale(0.95);
+        }
+
+        .review-templates {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .template-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(179, 145, 81, 0.2);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            animation: slideUp 0.6s ease-out both;
+            backdrop-filter: blur(5px);
+        }
+
+        .template-card:hover {
+            border-color: rgba(179, 145, 81, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .stars {
+            color: #FFD700;
+            font-size: 18px;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+
+        .template-text {
+            font-size: 15px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            color: #eee;
+            text-align: justify;
+            font-weight: 300;
+        }
+
+        .btn-copy {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #967a42 100%);
+            color: var(--primary-blue);
+            border: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .btn-copy:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            filter: brightness(0.9);
+        }
+
+        .refreshing {
+            opacity: 0.5;
+            filter: blur(4px);
+            pointer-events: none;
+            transform: scale(0.98);
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 30px 0;
+            font-size: 11px;
+            opacity: 0.5;
+            text-align: center;
+            letter-spacing: 2px;
+            width: 100%;
+        }
+
+        #toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-gold);
+            color: var(--primary-blue);
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 700;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            animation: toastIn 0.3s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translate(-50%, -20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(179, 145, 81, 0.2);
+            border-top: 3px solid var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">德川家康</div>
+        <div class="brand-name">IEYASU MASSAGE</div>
+    </header>
+
+    <div class="title-box">
+        <h2>感謝您的光臨</h2>
+        <p>您的肯定與回饋是我們前進的動力。選一個最接近您感受的範本，即可複製文字並開啟評論頁面。</p>
+        <div class="photo-tip">📸 <span>貼心提醒：搭配現場照片，效果更好喔！</span></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-refresh" onclick="fetchReviews()">
+            <span>🔄</span> 換一批試試
+        </button>
+    </div>
+
+    <div class="review-templates" id="template-container">
+        <!-- 初始載入動畫 -->
+        <div class="loading-container">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <div id="toast">已複製範本，跳轉中...</div>
+
+    <footer>
+        © 德川家康按摩 IEYASU MASSAGE<br>
+        SCIENTIFIC CONDITIONING & FASCIA RELEASE
+    </footer>
+
+    <script>
+        const REVIEW_LINK = "https://g.page/r/Ca-BxgZ8HfQLEBM/review";
+
+        window.addEventListener('DOMContentLoaded', fetchReviews);
+
+        async function fetchReviews() {
+            const container = document.getElementById('template-container');
+            
+            // 如果不是第一次載入，保持原有內容但顯示載入感
+            if (container.innerHTML === '') {
+                container.innerHTML = '<div class="loading-container"><div class="spinner"></div></div>';
+            }
+
+            try {
+                const response = await fetch('/api/generate-reviews');
+                const data = await response.json();
+
+                if (data.success && data.reviews) {
+                    container.innerHTML = '';
+                    data.reviews.forEach((review, index) => {
+                        setTimeout(() => {
+                            createTemplateCard(review, index);
+                        }, index * 150); // 錯開進場動畫
+                    });
+                }
+            } catch (error) {
+                console.error("無法抓取動態範本。");
+                container.innerHTML = '<p style="text-align:center; padding:20px;">暫時無法連線，請稍後再試。</p>';
+            }
+        }
+
+        function createTemplateCard(text, index) {
+            const container = document.getElementById('template-container');
+            const card = document.createElement('div');
+            card.className = 'template-card';
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.innerHTML = `
+                <div class="stars">★★★★★</div>
+                <div class="template-text">${text}</div>
+                <button class="btn-copy" onclick="copyAndRedirect(this)">
+                    一鍵複製並開啟 Google 評論
+                </button>
+            `;
+            container.appendChild(card);
+        }
+
+        async function copyAndRedirect(btn) {
+            const card = btn.closest('.template-card');
+            const textElement = card.querySelector('.template-text');
+            const text = textElement.innerText.trim();
+            
+            try {
+                // 複製到剪貼簿
+                await navigator.clipboard.writeText(text);
+                showToast("已成功複製，跳轉評論中...");
+                
+                // 視覺回饋：更換該卡片內容
+                replaceWithNewReview(card);
+
+                // 延遲跳轉給用戶反應時間
+                setTimeout(() => {
+                    window.location.href = REVIEW_LINK;
+                }, 1500);
+            } catch (err) {
+                // 備用複製方案
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                showToast("已複製，準備開啟頁面...");
+                replaceWithNewReview(card);
+                setTimeout(() => {
+                    window.location.href = REVIEW_LINK;
+                }, 1500);
+            }
+        }
+
+        async function replaceWithNewReview(card) {
+            card.classList.add('refreshing');
+            try {
+                const response = await fetch('/api/generate-single-review');
+                const data = await response.json();
+                if (data.success && data.review) {
+                    card.querySelector('.template-text').innerText = data.review;
+                }
+            } catch (error) {
+                console.error("更新單一範本失敗");
+            } finally {
+                setTimeout(() => {
+                    card.classList.remove('refreshing');
+                }, 500);
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                    toast.style.opacity = '1';
+                }, 300);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
