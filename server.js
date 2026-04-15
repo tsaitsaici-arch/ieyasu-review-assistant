@@ -1,10 +1,14 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+const USED_REVIEWS_PATH = path.join(__dirname, 'used-reviews.json');
+const EXPIRE_DAYS = 180;
 
 // 預設評論（當 API 失靈時的備案）
 const fallbackReviews = [
@@ -15,8 +19,39 @@ const fallbackReviews = [
     "第一次來就被圈粉了！筋膜放鬆的過程雖然有點痠，但按完後全身舒暢，原本緊繃的肌肉都鬆開了。下次一定要帶家人來。"
 ];
 
+// 讀取已使用評論（自動過濾 180 天以上的）
+function loadUsedReviews() {
+    if (!fs.existsSync(USED_REVIEWS_PATH)) return [];
+    try {
+        const data = JSON.parse(fs.readFileSync(USED_REVIEWS_PATH, 'utf-8'));
+        const cutoff = Date.now() - EXPIRE_DAYS * 24 * 60 * 60 * 1000;
+        return data.filter(r => r.usedAt > cutoff);
+    } catch {
+        return [];
+    }
+}
+
+// 儲存已使用評論（同時寫入並清除過期）
+function saveUsedReview(text) {
+    const existing = loadUsedReviews();
+    // 避免重複記錄
+    if (existing.some(r => r.text === text)) return;
+    existing.push({ text, usedAt: Date.now() });
+    fs.writeFileSync(USED_REVIEWS_PATH, JSON.stringify(existing, null, 2), 'utf-8');
+}
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// 標記評論已使用
+app.post('/api/mark-used', (req, res) => {
+    const { text } = req.body;
+    if (!text || typeof text !== 'string') {
+        return res.status(400).json({ success: false });
+    }
+    saveUsedReview(text.trim());
+    res.json({ success: true });
+});
 
 // API 路由
 app.get('/api/generate-reviews', async (req, res) => {
@@ -25,8 +60,10 @@ app.get('/api/generate-reviews', async (req, res) => {
         res.json({ success: true, reviews });
     } catch (error) {
         console.error("Gemini Error, using fallbacks:", error);
-        // 即使出錯也回傳預設評論，不讓前端轉圈圈
-        const shuffled = fallbackReviews.sort(() => 0.5 - Math.random());
+        const used = loadUsedReviews().map(r => r.text);
+        const available = fallbackReviews.filter(r => !used.includes(r));
+        const pool = available.length >= 3 ? available : fallbackReviews;
+        const shuffled = pool.sort(() => 0.5 - Math.random());
         res.json({ success: true, reviews: shuffled.slice(0, 3) });
     }
 });
@@ -36,7 +73,10 @@ app.get('/api/generate-single-review', async (req, res) => {
         const reviews = await generateGeminiReviews(1);
         res.json({ success: true, review: reviews[0] });
     } catch (error) {
-        const random = fallbackReviews[Math.floor(Math.random() * fallbackReviews.length)];
+        const used = loadUsedReviews().map(r => r.text);
+        const available = fallbackReviews.filter(r => !used.includes(r));
+        const pool = available.length > 0 ? available : fallbackReviews;
+        const random = pool[Math.floor(Math.random() * pool.length)];
         res.json({ success: true, review: random });
     }
 });
@@ -47,23 +87,54 @@ app.get('/', (req, res) => {
 });
 
 async function generateGeminiReviews(count) {
-    // 每次請求都重新讀取 env，確保抓到 Railway 的設定
-    const currentApiKey = process.env.GEMINI_API_KEY;
-    
+    const currentApiKey = (process.env.GEMINI_API_KEY || '').replace(/["\s]/g, '').split('\n')[0] || null;
+
     if (!currentApiKey) {
         console.warn("警告：未設定 GEMINI_API_KEY，使用預設評論。");
-        return fallbackReviews.sort(() => 0.5 - Math.random()).slice(0, count);
+        const used = loadUsedReviews().map(r => r.text);
+        const available = fallbackReviews.filter(r => !used.includes(r));
+        const pool = available.length >= count ? available : fallbackReviews;
+        return pool.sort(() => 0.5 - Math.random()).slice(0, count);
     }
 
+    const usedReviews = loadUsedReviews().map(r => r.text);
+    const avoidSection = usedReviews.length > 0
+        ? `\n以下是已被使用過的評論，請勿生成相同或高度相似的內容：\n${usedReviews.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
+        : '';
+
     const genAI = new GoogleGenerativeAI(currentApiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
     const prompt = `
-        你是一位剛在「德川家康按摩 (IEYASU MASSAGE)」完成服務的滿意顧客。
-        這是一家專業的「運動按摩、筋膜放鬆、科學調理」專門店。
-        請生成 ${count} 段完全不同風格、內容不重複的 Google Map 評論範本（每段約 50-80 字）：
-        重點參考：1.技術面(筋膜放鬆、酸痛點調理) 2.環境面(日系風格、質感) 3.感受面(身體變輕、不會推銷)。
-        要求：語氣像真實人類，使用台灣口語，輸出 JSON 字串陣列，不要有 Markdown。
+你是一位剛在「德川家康按摩（IEYASU MASSAGE）」完成服務的真實顧客。這是桃園/中壢/楊梅的專業「運動按摩・筋膜放鬆・科學調理」專門店，Google 評分 4.9 星。你的按摩體驗非常好，想自然地分享心得。
+
+背景知識（不要直接複製，用來理解品牌調性）：
+- 手法：結合經絡推拿 + 運動按摩 + 筋膜放鬆，獨創整体指壓法
+- 師傅特色：每位師傅都有一定水準，「不指定師傅也不會踩雷」
+- 環境：日系簡約風格、乾淨明亮
+- 服務態度：會先詢問身體狀況、解釋痠痛原因、給居家保養建議
+
+生成要求：
+- 每則 50–80 字
+- 每則風格、用詞、切入角度完全不同
+- 不要出現「推薦」「五星」「大推」等刷評感重的詞
+
+三大面向（每則只需涵蓋 1-2 個，不要三個都塞）：
+- 技術面 — 痠痛點精準、筋膜放鬆有感、手法有深度不是亂按、會針對問題處理
+- 環境面 — 日系風格舒服、空間乾淨、不像傳統按摩店那種感覺
+- 體感面 — 做完身體變輕、睡眠品質變好、不會硬推銷加購、師傅會教你怎麼自己保養
+
+關鍵字自然植入（不要硬塞，挑 1-2 個融入）：
+中壢按摩 / 桃園按摩 / 楊梅按摩 / 運動按摩 / 筋膜放鬆 / 德川家康
+
+語氣規則：
+- 台灣口語，像在跟朋友聊天
+- 可以有「欸」「真的」「超」「蠻」等口語詞
+- 長短句交錯，不要每句都一樣結構
+- 偶爾可以用「...」或「！」但不要每則都有
+
+請生成 ${count} 則評論。
+輸出格式：JSON 字串陣列，不含 Markdown，範例：["評論1", "評論2"]${avoidSection}
     `;
 
     try {
@@ -73,7 +144,7 @@ async function generateGeminiReviews(count) {
         return JSON.parse(jsonString);
     } catch (error) {
         console.error("Gemini API 呼叫失敗:", error);
-        throw error; // 丟出錯誤讓上層處理
+        throw error;
     }
 }
 
