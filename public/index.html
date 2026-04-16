@@ -351,7 +351,7 @@
                 showToast("已成功複製，跳轉評論中...");
                 replaceWithNewReview(card);
                 setTimeout(() => {
-                    window.open(REVIEW_LINK, '_blank');
+                    window.location.href = REVIEW_LINK;
                 }, 1500);
             } catch (err) {
                 // 備用複製方案
@@ -365,7 +365,7 @@
                 showToast("已複製，準備開啟頁面...");
                 replaceWithNewReview(card);
                 setTimeout(() => {
-                    window.open(REVIEW_LINK, '_blank');
+                    window.location.href = REVIEW_LINK;
                 }, 1500);
             }
         }
