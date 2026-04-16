@@ -338,18 +338,20 @@
             const card = btn.closest('.template-card');
             const textElement = card.querySelector('.template-text');
             const text = textElement.innerText.trim();
-            
+
+            // 標記為已使用（fire and forget）
+            fetch('/api/mark-used', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            }).catch(() => {});
+
             try {
-                // 複製到剪貼簿
                 await navigator.clipboard.writeText(text);
                 showToast("已成功複製，跳轉評論中...");
-                
-                // 視覺回饋：更換該卡片內容
                 replaceWithNewReview(card);
-
-                // 延遲跳轉給用戶反應時間
                 setTimeout(() => {
-                    window.location.href = REVIEW_LINK;
+                    window.open(REVIEW_LINK, '_blank');
                 }, 1500);
             } catch (err) {
                 // 備用複製方案
@@ -359,11 +361,11 @@
                 textArea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
-                
+
                 showToast("已複製，準備開啟頁面...");
                 replaceWithNewReview(card);
                 setTimeout(() => {
-                    window.location.href = REVIEW_LINK;
+                    window.open(REVIEW_LINK, '_blank');
                 }, 1500);
             }
         }

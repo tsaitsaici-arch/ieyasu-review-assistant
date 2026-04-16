@@ -81,6 +81,22 @@ app.get('/api/generate-single-review', async (req, res) => {
     }
 });
 
+// 健康檢查
+app.get('/api/health', async (req, res) => {
+    const apiKey = (process.env.GEMINI_API_KEY || '').replace(/["\s]/g, '').split('\n')[0];
+    if (!apiKey) {
+        return res.status(500).json({ status: 'error', gemini: 'GEMINI_API_KEY 未設定' });
+    }
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        await model.generateContent("回覆一個字：好");
+        res.json({ status: 'ok', gemini: 'connected', model: 'gemini-2.5-flash' });
+    } catch (error) {
+        res.status(500).json({ status: 'error', gemini: error.message });
+    }
+});
+
 // 根目錄
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -103,7 +119,7 @@ async function generateGeminiReviews(count) {
         : '';
 
     const genAI = new GoogleGenerativeAI(currentApiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
 你是一位剛在「德川家康按摩（IEYASU MASSAGE）」完成服務的真實顧客。這是桃園/中壢/楊梅的專業「運動按摩・筋膜放鬆・科學調理」專門店，Google 評分 4.9 星。你的按摩體驗非常好，想自然地分享心得。
