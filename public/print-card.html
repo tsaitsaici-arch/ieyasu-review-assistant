@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>德川家康 — 列印介紹卡</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+        }
+
+        .hint {
+            margin-bottom: 24px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .page {
+            width: 148mm;
+            background: white;
+            border-radius: 4mm;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .header {
+            background: #001D40;
+            color: white;
+            text-align: center;
+            padding: 18px 16px 14px;
+        }
+
+        .logo-box {
+            border: 2px solid white;
+            display: inline-block;
+            padding: 5px 20px;
+            letter-spacing: 4px;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .brand-sub {
+            font-size: 9px;
+            letter-spacing: 5px;
+            opacity: 0.65;
+            text-transform: uppercase;
+        }
+
+        .body {
+            padding: 20px 20px 16px;
+            text-align: center;
+            background: white;
+        }
+
+        .title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #001D40;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        #qrcode canvas, #qrcode img {
+            border: 3px solid #001D40;
+            border-radius: 4px;
+            padding: 6px;
+        }
+
+        .steps {
+            text-align: left;
+            background: #f8f6f0;
+            border-radius: 6px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+        }
+
+        .steps-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #B39151;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .step:last-child { margin-bottom: 0; }
+
+        .step-num {
+            background: #001D40;
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .footer {
+            background: #001D40;
+            color: rgba(255,255,255,0.5);
+            text-align: center;
+            padding: 8px;
+            font-size: 9px;
+            letter-spacing: 2px;
+        }
+
+        .gold { color: #B39151; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .hint { display: none; }
+            .page {
+                box-shadow: none;
+                border-radius: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<p class="hint">✦ 使用瀏覽器「列印」功能（Ctrl+P）即可印出 ✦</p>
+
+<div class="page">
+    <div class="header">
+        <div class="logo-box">德川家康</div>
+        <div class="brand-sub">IEYASU MASSAGE · TAOYUAN</div>
+    </div>
+
+    <div class="body">
+        <div class="title">感謝您今天的光臨 🙏</div>
+        <div class="subtitle">
+            您的一則評論，是我們持續進步的動力<br>
+            掃描下方 QR Code，<span class="gold"><b>30 秒完成評論</b></span>
+        </div>
+
+        <div id="qrcode"></div>
+
+        <div class="steps">
+            <div class="steps-title">▌ 操作步驟</div>
+            <div class="step">
+                <div class="step-num">1</div>
+                <span>掃描 QR Code，進入評論助手頁面</span>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <span>選一則最接近您感受的範本</span>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <span>點「一鍵複製並開啟 Google 評論」</span>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <span>在 Google 頁面貼上並送出，完成！</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        SCIENTIFIC CONDITIONING &amp; FASCIA RELEASE
+    </div>
+</div>
+
+<script>
+    new QRCode(document.getElementById("qrcode"), {
+        text: "https://ieyasu-review-assistant-production.up.railway.app",
+        width: 160,
+        height: 160,
+        colorDark: "#001D40",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+</script>
+
+</body>
+</html>
